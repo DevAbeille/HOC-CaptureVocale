@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Confessionnal IA - Collecte de Captures</title>
+    <style>
+        :root {
+            --brand-orange: #FF5A36; 
+            --bg-dark: #121212;
+            --surface-dark: #1E1E1E;
+            --surface-card: #2A2A2A;
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
+            --status-recording: #EA2B2B;
+            --font-family: 'Arial', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow: hidden;
+        }
+
+        .phone-container {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-color: var(--surface-dark);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .status-bar {
+            height: 44px;
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background-color: var(--surface-dark);
+            border-bottom: 1px solid #1A1A1A;
+            flex-shrink: 0;
+            z-index: 2010;
+        }
+
+        .app-content {
+            flex: 1;
+            padding: 20px;
+            padding-bottom: 100px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        .app-view {
+            display: none;
+        }
+        .app-view.active {
+            display: block;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        h2 span { color: var(--brand-orange); }
+
+        label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .custom-select {
+            width: 100%;
+            background-color: var(--surface-card);
+            border: 1px solid #333;
+            color: var(--text-main);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px; 
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A0A0A0'><path d='M2 4l4 4 4-4z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            margin-bottom: 20px;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .tag-badge {
+            background-color: #252525;
+            color: var(--text-muted);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #333;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .tag-badge.active {
+            background-color: rgba(255, 90, 54, 0.15);
+            color: var(--brand-orange);
+            border-color: var(--brand-orange);
+            font-weight: bold;
+        }
+
+        .recorder-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+        .mic-button-outer {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background-color: rgba(255, 90, 54, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .mic-button-inner {
+            width: 95px;
+            height: 95px;
+            border-radius: 50%;
+            background-color: var(--brand-orange);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(255, 90, 54, 0.4);
+            z-index: 2;
+        }
+
+        .mic-icon { width: 36px; height: 36px; fill: #FFF; }
+        .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--brand-orange);
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .recorder-box.recording .mic-button-inner {
+            background-color: var(--status-recording);
+            box-shadow: 0 10px 25px rgba(234, 43, 43, 0.4);
+        }
+
+        .recorder-box.recording .pulse-ring { animation: ripple 1.5s infinite ease-out; }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .status-text {
+            margin-top: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .transcript-box {
+            background-color: var(--surface-card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 18px;
+            border: 1px solid #333;
+            display: none; 
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        .edit-textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #EEE;
+            font-size: 14px;
+            line-height: 1.5;
+            font-style: italic;
+            resize: none;
+            outline: none;
+        }
+
+        .action-group {
+            display: none; 
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 30px;
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .btn:active { opacity: 0.8; }
+        .btn-primary { background-color: var(--brand-orange); color: white; }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid #444;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+        .btn-secondary:hover {
+            border-color: var(--brand-orange);
+            color: #FFF;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #2A2A2A;
+            padding-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .project-list-group { display: flex; flex-direction: column; gap: 12px; }
+
+        .project-row-card {
+            background-color: var(--surface-card);
+            border-left: 4px solid var(--brand-orange);
+            padding: 15px;
+            border-radius: 0 12px 12px 0;
+            animation: slideUp 0.3s ease forwards;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .project-row-card:active { background-color: #333; }
+        .project-arrow { color: var(--brand-orange); font-weight: bold; font-size: 18px; }
+
+        .account-banner {
+            background-color: #1A1A1A;
+            border: 1px solid #333;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .account-banner strong { color: #FFF; }
+
+        .trigger-search-bar {
+            background-color: var(--surface-card);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: border-color 0.2s;
+        }
+        .trigger-search-bar:active {
+            border-color: var(--brand-orange);
+            background-color: #252525;
+        }
+        .trigger-search-bar svg { fill: currentColor; width: 18px; height: 18px; }
+
+        .members-box {
+            background: #1A1A1A; 
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .members-box h4 {
+            color: var(--brand-orange);
+            margin-bottom: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .members-box ul {
+            list-style: none;
+            font-size: 13px;
+            color: #E0E0E0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .recap-box {
+            background-color: var(--surface-card);
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #333;
+            margin-bottom: 25px;
+        }
+
+        .recap-title { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
+        .recap-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .recap-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #DDD;
+            padding-left: 18px;
+        }
+        .recap-content li { margin-bottom: 8px; }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 200;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background-color: var(--surface-dark);
+            border: 1px solid #333;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 340px;
+            padding: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            animation: slideUp 0.2s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
+        }
+        .modal-header h3 { font-size: 14px; font-weight: bold; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;}
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; line-height: 1; }
+
+        .search-input {
+            width: 100%;
+            background-color: #1A1A1A;
+            border: 1px solid #444;
+            color: #FFF;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+        .search-input:focus { border-color: var(--brand-orange); }
+
+        .search-results {
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .search-row {
+            background-color: var(--surface-card);
+            border: 1px solid #333;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .search-row:active { background-color: #333; border-color: var(--brand-orange); }
+        .search-row-title { flex: 1; padding-right: 10px; line-height: 1.4; font-weight: 600; }
+
+        .login-view-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            z-index: 2100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 16px;
+            background: var(--surface-dark);
+            border: 1px solid #444;
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-size: 16px;
+            outline: none;
+        }
+        .login-input:focus { border-color: var(--brand-orange); }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 75px;
+            background-color: var(--surface-dark);
+            border-top: 1px solid #1A1A1A;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+        .nav-item.active { color: var(--brand-orange); }
+        
+        .back-navigation {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--brand-orange);
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .password-wrapper { 
+    position: relative; 
+    /* Au lieu de block, inline-block préserve le centrage natif de tes inputs */
+    display: inline-block; 
+    width: 100%;
+    max-width: 300px; /* Aligné sur la taille max de ton input login */
+    margin-bottom: 20px;
+}
+
+/* On applique le style uniquement pour l'espace de l'œil sans toucher au reste */
+.password-wrapper .login-input {
+    width: 100% !important; 
+    padding-right: 45px !important; 
+    box-sizing: border-box;
+}
+
+.toggle-password-btn { 
+    position: absolute; 
+    right: 16px; /* Aligné proprement avec la courbure de l'input */
+    top: 50%; 
+    transform: translateY(-50%); 
+    background: none; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    z-index: 2;
+}
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        
+        <div id="login-overlay" class="login-view-overlay">
+            <h2 style="margin-bottom: 8px;">Confessionnal <span>IA</span></h2>
+            <p id="login-status-msg" style="color: var(--text-muted); margin-bottom: 24px; text-align: center; font-size: 14px; line-height: 1.4;">Identification requise pour accéder aux espaces projets Notion</p>
+            
+            <input type="text" id="login-email" class="login-input" placeholder="Adresse email professionnelle">
+            <div class="password-wrapper">
+                <input type="password" id="login-password" class="login-input" placeholder="Mot de passe">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility()">👁️‍🗨️</button>
+            </div>
+            
+            <button onclick="performLogin(false)" class="btn btn-primary" style="width: 100%; max-width: 300px; margin-bottom: 8px;">Se connecter</button>
+            <button onclick="performLogin(true)" class="btn btn-secondary" style="width: 100%; max-width: 300px; margin-top: 0; margin-bottom: 20px; border-color: var(--brand-orange); color: #FFF;">🆕 Créer mon compte</button>
+            
+            <button onclick="bypassLogin()" class="btn btn-secondary" style="width: 100%; max-width: 300px; margin-top: 0; opacity: 0.5;">⚙️ Tester sans connexion (Bypass)</button>
+        </div>
+
+        <div class="status-bar">
+            <span>Collecte de Captures</span>
+            <span id="display-user-email" style="background: #252525; padding: 4px 10px; border-radius: 20px;">Non connecté</span>
+        </div>
+
+        <div class="app-content">
+            
+            <div id="view-capture" class="app-view">
+                <h2>Enregistrer une <span>Capture</span></h2>
+                
+                <label for="project-select">Projet ciblé</label>
+                <select id="project-select" class="custom-select"></select>
+
+                <label>Catégorie</label>
+                <div class="tag-container" id="tag-wrapper">
+                    <span class="tag-badge active" onclick="selectTag(this)">Design de service</span>
+                    <span class="tag-badge" onclick="selectTag(this)">Inclusion numérique</span>
+                    <span class="tag-badge" onclick="selectTag(this)">Accompagnement tech</span>
+                </div>
+
+                <div id="recorder-node" class="recorder-box">
+                    <div class="pulse-ring"></div>
+                    <div class="mic-button-outer" onclick="processMicState()">
+                        <div class="mic-button-inner">
+                            <svg class="mic-icon" viewBox="0 0 24 24">
+                                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div id="recorder-status" class="status-text">Appuyer pour lancer l'enregistrement</div>
+                </div>
+
+                <div id="transcript-wrapper" class="transcript-box">
+                    <label>Synthèse brute (Modifiable avant envoi)</label>
+                    <textarea id="transcript-output" class="edit-textarea" rows="4"></textarea>
+                </div>
+
+                <div id="action-wrapper" class="action-group">
+                    <button class="btn btn-primary" onclick="shipDirectToNotion()">🚀 Envoyer à la base Notion</button>
+                </div>
+            </div>
+
+            <div id="view-projects" class="app-view active">
+                <h2>Mes Projets <span>Actifs</span></h2>
+                
+                <div class="account-banner" id="demo-badge-info">
+                    Session utilisateur : <strong>Non configurée</strong>
+                </div>
+
+                <div class="trigger-search-bar" onclick="openJoinModal()">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    Rechercher et rejoindre un projet...
+                </div>
+
+                <div class="section-title">Mes abonnements</div>
+                <div class="project-list-group" id="my-active-projects-list"></div>
+            </div>
+
+            <div id="view-project-details" class="app-view">
+                <div class="back-navigation" onclick="switchView('projects')">
+                    ← Liste des projets
+                </div>
+                
+                <h2 id="details-title">Nom du Projet</h2>
+
+                <div class="members-box">
+                    <h4>Membres actifs (Notion)</h4>
+                    <ul id="project-members-list">
+                        <li>Chargement des collaborateurs...</li>
+                    </ul>
+                </div>
+
+                <div class="recap-box">
+                    <div class="recap-title" id="recap-project-title">Rapports Hebdomadaires</div>
+                    <div class="recap-meta">
+                        <span>🗓️</span>
+                        <span>Flux de consolidation automatique</span>
+                    </div>
+                    <ul class="recap-content" id="recaps-list-container"></ul>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bottom-nav">
+            <button id="nav-projects" class="nav-item active" onclick="switchView('projects')">
+                <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+                Projets
+            </button>
+            <button id="nav-capture" class="nav-item" onclick="switchView('capture')">
+                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                Capturer
+            </button>
+        </div>
+    </div>
+
+    <div id="search-modal" class="modal-overlay" onclick="if(event.target === this) closeJoinModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Catalogue Projets</h3>
+                <button class="modal-close" onclick="closeJoinModal()">&times;</button>
+            </div>
+            <input type="text" id="modal-search-input" class="search-input" placeholder="Rechercher une référence..." oninput="filterModalResults()">
+            <div class="search-results" id="modal-results-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:3000";
+        let currentUserEmail = "";
+        let captureState = 0; 
+        let mediaRecorder;
+        let audioChunks = [];
+        let myActiveProjects = [];
+        let availableDatabaseProjects = [];
+
+        function togglePasswordVisibility() {
+    // 1. On récupère ton input de mot de passe grâce à son identifiant précis
+        const passInput = document.getElementById('login-password');
+    // 2. On récupère le bouton qui a l'icône de l'œil
+        const btn = document.querySelector('.toggle-password-btn');
+    
+    // 3. On alterne le type de l'input et le visuel de l'œil
+        if (passInput.type === "password") {
+            passInput.type = "text";
+            btn.innerText = "🙈"; // Devient un singe ou un œil barré quand le texte est visible
+        } else {
+            passInput.type = "password";
+            btn.innerText = "👁️"; // Revient à l'œil normal quand le texte est masqué
+        }
+    }
+        // Gestion unifiée de l'Authentification (Connexion VS Inscription)
+        async function performLogin(isRegistering = false) {
+            const emailInput = document.getElementById('login-email').value.trim();
+            const passwordInput = document.getElementById('login-password').value.trim();
+            const statusMsg = document.getElementById('login-status-msg');
+            
+            if (!emailInput || !passwordInput) return alert("Veuillez remplir l'email et le mot de passe.");
+            
+            const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
+            statusMsg.innerText = isRegistering ? "Création du compte sur Notion..." : "Vérification en cours...";
+            
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput, password: passwordInput })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (isRegistering) {
+                        alert("Compte créé avec succès ! Saisissez à nouveau votre mot de passe pour ouvrir votre session.");
+                        statusMsg.innerText = "Identification requise pour accéder aux espaces projets Notion";
+                        document.getElementById('login-password').value = "";
+                    } else {
+                        currentUserEmail = emailInput;
+                        document.getElementById('display-user-email').innerText = currentUserEmail;
+                        document.getElementById('demo-badge-info').innerHTML = `Utilisateur : <strong>${currentUserEmail}</strong>`;
+                        document.getElementById('login-overlay').style.display = 'none';
+                        await syncCatalogueProjets();
+                    }
+                } else {
+                    alert(data.error || "Une erreur est survenue.");
+                    statusMsg.innerText = "Identification requise pour accéder aux espaces projets Notion";
+                }
+            } catch (err) {
+                alert("Impossible de joindre le serveur backend.");
+                statusMsg.innerText = "Identification requise pour accéder aux espaces projets Notion";
+            }
+        }
+
+        function bypassLogin() {
+            currentUserEmail = "demo.test@agence.local";
+            document.getElementById('display-user-email').innerText = "Mode Test (Bypass)";
+            document.getElementById('demo-badge-info').innerHTML = `Utilisateur : <strong>${currentUserEmail} (Bypass)</strong>`;
+            document.getElementById('login-overlay').style.display = 'none';
+            syncCatalogueProjets();
+        }
+
+        async function syncCatalogueProjets() {
+            try {
+                const res = await fetch(`${API_URL}/api/projects`);
+                const data = await res.json();
+                if (data.success) {
+                    availableDatabaseProjects = data.projects;
+                    updateCaptureDropdown(); 
+                }
+            } catch (err) {
+                console.error("Erreur lors de la synchronisation :", err);
+            }
+        }
+
+        function updateCaptureDropdown() {
+            const select = document.getElementById('project-select');
+            if (select) {
+                if (myActiveProjects.length === 0) {
+                    select.innerHTML = `<option value="Général">Général (Aucun projet rejoint)</option>`;
+                } else {
+                    select.innerHTML = myActiveProjects.map(p => `<option value="${p}">${p}</option>`).join('');
+                }
+            }
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if(viewId === 'capture') {
+                document.getElementById('view-capture').classList.add('active');
+                document.getElementById('nav-capture').classList.add('active');
+            } else if(viewId === 'projects') {
+                document.getElementById('view-projects').classList.add('active');
+                document.getElementById('nav-projects').classList.add('active');
+                renderActiveProjectsList();
+            } else if(viewId === 'details') {
+                document.getElementById('view-project-details').classList.add('active');
+                document.getElementById('nav-projects').classList.add('active');
+            }
+        }
+
+        function renderActiveProjectsList() {
+            const listContainer = document.getElementById('my-active-projects-list');
+            listContainer.innerHTML = "";
+
+            if (myActiveProjects.length === 0) {
+                listContainer.innerHTML = `<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0;">Aucun projet actif sélectionné. Utilisez le moteur de recherche ci-dessus.</div>`;
+                return;
+            }
+
+            myActiveProjects.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'project-row-card';
+                card.onclick = () => openProjectDetails(proj);
+                card.innerHTML = `<span>📁 ${proj}</span><span class="project-arrow">→</span>`;
+                listContainer.appendChild(card);
+            });
+        }
+
+        function openJoinModal() {
+            document.getElementById('search-modal').style.display = "flex";
+            document.getElementById('modal-search-input').value = "";
+            document.getElementById('modal-search-input').focus();
+            filterModalResults();
+        }
+
+        function closeJoinModal() { document.getElementById('search-modal').style.display = "none"; }
+
+        function filterModalResults() {
+            const query = document.getElementById('modal-search-input').value.toLowerCase().trim();
+            const container = document.getElementById('modal-results-list');
+            container.innerHTML = "";
+
+            const filtered = availableDatabaseProjects.filter(p => {
+                const matchesQuery = p.toLowerCase().includes(query);
+                const notJoinedYet = !myActiveProjects.includes(p);
+                return matchesQuery && notJoinedYet;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:10px 0;">Aucune référence disponible</div>`;
+                return;
+            }
+
+            filtered.forEach(proj => {
+                const row = document.createElement('div');
+                row.className = 'search-row';
+                row.onclick = () => {
+                    closeJoinModal();
+                    selectProjectForJoining(proj);
+                };
+                row.innerHTML = `<span class="search-row-title">📁 ${proj}</span><span class="project-arrow">→</span>`;
+                container.appendChild(row);
+            });
+        }
+
+        async function selectProjectForJoining(projectName) {
+            try {
+                const res = await fetch(`${API_URL}/api/user/projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentUserEmail, project: projectName })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (!myActiveProjects.includes(projectName)) {
+                        myActiveProjects.push(projectName);
+                    }
+                    updateCaptureDropdown(); 
+                    switchView('projects');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function openProjectDetails(projectName) {
+            switchView('details');
+            document.getElementById('details-title').innerText = projectName;
+            
+            const membersList = document.getElementById('project-members-list');
+            const recapsList = document.getElementById('recaps-list-container');
+            
+            membersList.innerHTML = "<li>Mise à jour de l'équipe...</li>";
+            recapsList.innerHTML = "<li>Récupération de l'historique...</li>";
+
+            try {
+                const resMembers = await fetch(`${API_URL}/api/projects/members?project=${encodeURIComponent(projectName)}`);
+                const dataMembers = await resMembers.json();
+                membersList.innerHTML = (dataMembers.success && dataMembers.members.length > 0)
+                    ? dataMembers.members.map(m => `<li>🟢 ${m}</li>`).join('')
+                    : `<li><i style="color:var(--text-muted);">Aucun utilisateur assigné</i></li>`;
+            } catch (err) { membersList.innerHTML = "<li>Erreur de chargement.</li>"; }
+
+            try {
+                const resRecaps = await fetch(`${API_URL}/api/projects/recap`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project: projectName })
+                });
+                const dataRecaps = await resRecaps.json();
+                if (dataRecaps.success) recapsList.innerHTML = dataRecaps.contents.map(r => `<li>${r}</li>`).join('');
+            } catch (err) { recapsList.innerHTML = "<li>Erreur lors de la récupération des rapports.</li>"; }
+        }
+
+        function selectTag(element) {
+            document.querySelectorAll('.tag-badge').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        async function processMicState() {
+            const node = document.getElementById('recorder-node');
+            const status = document.getElementById('recorder-status');
+            const txWrapper = document.getElementById('transcript-wrapper');
+            const actWrapper = document.getElementById('action-wrapper');
+
+            if (captureState === 0) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => { if (event.data && event.data.size > 0) audioChunks.push(event.data); };
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        await sendAudioToGemini(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    captureState = 1;
+                    node.classList.add('recording');
+                    status.innerText = "Enregistrement en cours... Cliquez à nouveau pour terminer.";
+                    txWrapper.style.display = "none";
+                    actWrapper.style.display = "none";
+                } catch (err) { status.innerText = "Accès microphone requis."; }
+            } 
+            else if (captureState === 1) {
+                captureState = 2;
+                node.classList.remove('recording');
+                status.innerText = "Analyse et nettoyage par l'IA...";
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        async function sendAudioToGemini(audioBlob) {
+            const status = document.getElementById('recorder-status');
+            const txWrapper = document.getElementById('transcript-wrapper');
+            const actWrapper = document.getElementById('action-wrapper');
+            const txOutput = document.getElementById('transcript-output');
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, `capture.webm`);
+
+            try {
+                const response = await fetch(`${API_URL}/api/confess`, { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.success) {
+                    status.innerText = "Analyse terminée";
+                    txWrapper.style.display = "block";
+                    actWrapper.style.display = "grid";
+                    txOutput.value = data.anonymizedInsight; 
+                } else {
+                    status.innerText = "Échec de l'analyse.";
+                    clearCaptureInterface();
+                }
+            } catch (error) {
+                status.innerText = "Erreur réseau.";
+                clearCaptureInterface();
+            }
+        }
+
+        function clearCaptureInterface() {
+            captureState = 0;
+            document.getElementById('recorder-status').innerText = "Appuyer pour lancer l'enregistrement";
+            document.getElementById('transcript-wrapper').style.display = "none";
+            document.getElementById('action-wrapper').style.display = "none";
+            document.getElementById('transcript-output').value = "";
+        }
+
+        async function shipDirectToNotion() {
+            const select = document.getElementById('project-select');
+            const targetProject = select ? select.value : "Général";
+            const correctedInsight = document.getElementById('transcript-output').value.trim();
+
+            if (!correctedInsight) return alert("Le texte est vide !");
+
+            try {
+                const res = await fetch(`${API_URL}/api/notion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ insight: correctedInsight, project: targetProject })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Signal enregistré dans Notion !");
+                    clearCaptureInterface();
+                }
+            } catch (err) {
+                alert("Erreur de transmission.");
+            }
+        }
+    </script>
+</body>
+</html>
