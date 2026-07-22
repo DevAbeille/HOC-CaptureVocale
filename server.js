@@ -1,6 +1,7 @@
 require('dotenv').config(); 
 const express = require('express');
 const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 const cors = require('cors');
 const fs = require('fs');
 const { GoogleGenAI } = require('@google/genai'); 
@@ -19,7 +20,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
@@ -303,7 +305,6 @@ app.post('/api/projects/recap', async (req, res) => {
  * ==========================================================================
  */
 app.post('/api/confess', upload.single('audio'), async (req, res) => {
-    let filePath = null;
     try {
         const audioFile = req.file;
 
@@ -311,13 +312,15 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
             return res.status(400).json({ success: false, error: "Fichier audio manquant." });
         }
 
-        filePath = audioFile.path;
+        // Détection ou définition du MIME type
         let detectedMimeType = audioFile.mimetype;
         if (!detectedMimeType || detectedMimeType === 'application/octet-stream') {
             detectedMimeType = 'audio/webm'; 
         }
 
-        const audioBuffer = fs.readFileSync(filePath);
+        // Récupération directe du Buffer depuis la mémoire (compatible Serverless Vercel)
+        const audioBuffer = audioFile.buffer;
+
         const audioPart = {
             inlineData: {
                 data: audioBuffer.toString("base64"),
@@ -342,7 +345,6 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
             ]
         });
 
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         const generatedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "Rien n'a pu être généré.";
 
         res.json({ 
@@ -352,7 +354,6 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
 
     } catch (error) {
         console.error("❌ Erreur Gemini :", error);
-        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
         res.status(500).json({ success: false, error: error.message });
     }
 });
