@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const fs = require('fs');
 const { GoogleGenAI } = require('@google/genai'); 
 const { Client } = require('@notionhq/client');
 
@@ -19,6 +18,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Stockage en mémoire RAM obligatoire pour l'environnement Serverless (Vercel)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -36,17 +36,16 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
-            return res.status(400).json({ success: false, error: "Email et mot de passe requis." });
+            return res.status(400).json({ success: false, error: "Identifiants hoc requis pour l'accès." });
         }
 
         if (!process.env.NOTION_CONTACT_DATASOURCE_ID) {
-            return res.status(500).json({ success: false, error: "Configuration serveur incomplète (NOTION_CONTACT_DATASOURCE_ID manquant)." });
+            return res.status(500).json({ success: false, error: "Configuration serveur hoc incomplète (NOTION_CONTACT_DATASOURCE_ID manquant)." });
         }
         
         const dsId = process.env.NOTION_CONTACT_DATASOURCE_ID.trim().replace(/-/g, "");
-        console.log(`🔍 [Auth] Recherche des identifiants pour : ${email}`);
+        console.log(`⚡ [hoc Auth] Vérification des accès pour : ${email}`);
 
-        // Requête sur la Data Source pour valider le couple Email et Password
         const response = await notion.request({
             path: `data_sources/${dsId}/query`,
             method: 'POST',
@@ -61,15 +60,15 @@ app.post('/api/auth/login', async (req, res) => {
         });
 
         if (response && response.results && response.results.length > 0) {
-            console.log(`✅ [Auth] Connexion validée pour : ${email}`);
+            console.log(`🎯 [hoc Auth] Accès accordé à l'espace pour : ${email}`);
             return res.json({ success: true });
         } else {
-            console.log(`⚠️ [Auth] Échec de connexion : Identifiants introuvables pour ${email}`);
+            console.log(`⚠️ [hoc Auth] Accès refusé : Identifiants invalides pour ${email}`);
             return res.status(401).json({ success: false, error: "Email ou mot de passe incorrect." });
         }
 
     } catch (error) {
-        console.error("❌ Erreur lors de l'authentification :", error);
+        console.error("❌ [hoc Auth] Erreur lors de l'authentification :", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -84,19 +83,17 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
-            return res.status(400).json({ success: false, error: "Champs manquants." });
+            return res.status(400).json({ success: false, error: "Champs d'inscription incomplets." });
         }
 
-        console.log(`➕ [Auth] Demande d'inscription pour l'adresse : ${email}`);
+        console.log(`➕ [hoc Auth] Création d'un nouveau profil collaborateur : ${email}`);
 
         if (!process.env.NOTION_CONTACT_DATABASE_ID) {
-            return res.status(500).json({ success: false, error: "Configuration serveur incomplète (NOTION_CONTACT_DATABASE_ID manquant)." });
+            return res.status(500).json({ success: false, error: "Configuration serveur hoc incomplète (NOTION_CONTACT_DATABASE_ID manquant)." });
         }
         
         const dbId = process.env.NOTION_CONTACT_DATABASE_ID.trim().replace(/-/g, "");
 
-        // Ajout de la nouvelle ligne utilisateur dans la table des contacts Notion
-        // Insertion avec 'Email' comme colonne principale (Title)
         await notion.request({
             path: "pages",
             method: "POST",
@@ -115,18 +112,18 @@ app.post('/api/auth/register', async (req, res) => {
                     },
                     'Projets Rejoints': {
                         rich_text: [
-                            { text: { content: "" } } // Vide par défaut à la création
+                            { text: { content: "" } }
                         ]
                     }
                 }
             }
         });
 
-        console.log(`✅ [Auth] Utilisateur [${email}] créé avec succès dans Notion.`);
+        console.log(`✨ [hoc Auth] Profil [${email}] enregistré dans le Workspace.`);
         res.json({ success: true });
 
     } catch (error) {
-        console.error("❌ Erreur lors de la création du compte dans Notion :", error);
+        console.error("❌ [hoc Auth] Erreur lors de la création du compte :", error);
         res.status(500).json({ success: false, error: "Erreur d'écriture Notion : " + error.message });
     }
 });
@@ -139,7 +136,7 @@ app.post('/api/auth/register', async (req, res) => {
  */
 app.get('/api/projects', async (req, res) => {
     try {
-        console.log("🔍 Récupération globale du Catalogue des projets (Table 1)...");
+        console.log("🔍 [hoc Catalogue] Synchronisation des projets actifs...");
         
         if (!process.env.NOTION_CATALOGUE_DATASOURCE_ID) {
             return res.status(500).json({ success: false, error: "NOTION_CATALOGUE_DATASOURCE_ID manquante." });
@@ -149,7 +146,7 @@ app.get('/api/projects', async (req, res) => {
         const response = await notion.request({
             path: `data_sources/${dsId}/query`, 
             method: 'POST',
-            body: {} // Tout récupérer sans filtre
+            body: {}
         });
 
         const projetsUniques = new Set();
@@ -167,12 +164,12 @@ app.get('/api/projects', async (req, res) => {
         }
 
         const listeProjets = Array.from(projetsUniques);
-        console.log(`📋 Liste du catalogue transmise à l'application mobile :`, listeProjets);
+        console.log(`📋 [hoc Catalogue] ${listeProjets.length} projet(s) chargé(s) :`, listeProjets);
 
         res.json({ success: true, projects: listeProjets });
 
     } catch (error) {
-        console.error("❌ Erreur lors du fetch du catalogue projets :", error);
+        console.error("❌ [hoc Catalogue] Erreur lors de la récupération des projets :", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -190,7 +187,7 @@ app.get('/api/projects/members', async (req, res) => {
             return res.status(400).json({ success: false, error: "Nom de projet manquant." });
         }
 
-        console.log(`🔍 Recherche des collaborateurs assignés au projet : ${project}`);
+        console.log(`🔍 [hoc Équipe] Extraction des contributeurs du projet : ${project}`);
         if (!process.env.NOTION_INSIGHT_DATASOURCE_ID) {
             return res.status(500).json({ success: false, error: "NOTION_INSIGHT_DATASOURCE_ID manquante." });
         }
@@ -221,7 +218,7 @@ app.get('/api/projects/members', async (req, res) => {
 
         res.json({ success: true, members: Array.from(membres) });
     } catch (error) {
-        console.error("❌ Erreur lors de la récupération des membres :", error);
+        console.error("❌ [hoc Équipe] Erreur lors de la récupération des membres :", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -232,7 +229,7 @@ app.get('/api/projects/members', async (req, res) => {
 app.post('/api/user/projects', async (req, res) => {
     try {
         const { email, project } = req.body;
-        console.log(`🔗 Liaison locale enregistrée : [${email}] <-> Projet [${project}]`);
+        console.log(`🔗 [hoc User] Liaison enregistrée : [${email}] <-> Projet [${project}]`);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -252,7 +249,7 @@ app.post('/api/projects/recap', async (req, res) => {
             return res.status(400).json({ success: false, error: "Nom du projet manquant." });
         }
 
-        console.log(`🔍 Extraction des rapports hebdos (Table 3) pour : ${project}`);
+        console.log(`🔍 [hoc Synthèse] Consolidation des rapports hebdomadaires : ${project}`);
         if (!process.env.NOTION_RECAPS_DATASOURCE_ID) {
             return res.status(500).json({ success: false, error: "NOTION_RECAPS_DATASOURCE_ID manquante." });
         }
@@ -287,20 +284,20 @@ app.post('/api/projects/recap', async (req, res) => {
         }
 
         if (listeRecaps.length === 0) {
-            listeRecaps = ["Aucun rapport historique consolidé pour le moment sur ce projet."];
+            listeRecaps = ["Aucune synthèse historique disponible pour ce projet pour le moment."];
         }
 
         res.json({ success: true, contenu: listeRecaps });
 
     } catch (error) {
-        console.error("❌ Erreur lors de la récupération des rapports :", error);
+        console.error("❌ [hoc Synthèse] Erreur lors de l'extraction :", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
 /**
  * ==========================================================================
- * ÉTAPE 4 : Pipeline Gemini — Transcription et nettoyage audio en direct
+ * ÉTAPE 4 : Pipeline Gemini — Confessionnal IA (Traitement audio direct)
  * ==========================================================================
  */
 app.post('/api/confess', upload.single('audio'), async (req, res) => {
@@ -308,16 +305,15 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
         const audioFile = req.file;
 
         if (!audioFile) {
-            return res.status(400).json({ success: false, error: "Fichier audio manquant." });
+            return res.status(400).json({ success: false, error: "Flux audio manquant." });
         }
 
-        // Détection ou définition du MIME type
         let detectedMimeType = audioFile.mimetype;
         if (!detectedMimeType || detectedMimeType === 'application/octet-stream') {
             detectedMimeType = 'audio/webm'; 
         }
 
-        // Récupération directe du Buffer depuis la mémoire (compatible Serverless Vercel)
+        // Lecture du Buffer directement depuis la RAM (Serverless Friendly)
         const audioBuffer = audioFile.buffer;
 
         const audioPart = {
@@ -327,11 +323,13 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
             }
         };
 
+        console.log(`🎙️ [hoc Confessionnal] Analyse du flux vocal avec Gemini...`);
+
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: [
                 audioPart,
-                `Tu es l'intelligence artificielle du "Confessionnal IA", un outil de capture de signaux faibles et d'insights terrain pour des projets de design et de conseil.
+                `Tu es l'intelligence artificielle du "Confessionnal IA" par House of Cadres (hoc), un outil de capture de signaux faibles et d'insights terrain pour des projets de design et de conseil.
 
                 Analyse l'audio fourni et respecte STRICTEMENT les règles suivantes :
 
@@ -346,13 +344,15 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
 
         const generatedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "Rien n'a pu être généré.";
 
+        console.log(`✨ [hoc Confessionnal] Insight extrait avec succès.`);
+
         res.json({ 
             success: true, 
             anonymizedInsight: generatedText.trim() 
         });
 
     } catch (error) {
-        console.error("❌ Erreur Gemini :", error);
+        console.error("❌ [hoc Confessionnal] Erreur de traitement Gemini :", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -371,7 +371,7 @@ app.post('/api/notion', async (req, res) => {
             return res.status(400).json({ success: false, error: "Contenu de l'insight manquant." });
         }
 
-        console.log(`➕ Insertion d'un nouveau signal terrain dans la Table 2 [Projet: ${project}]...`);
+        console.log(`🎯 [hoc Insight] Injection du signal faible [Projet: ${project || "Général"}]...`);
 
         if (!process.env.NOTION_INSIGHT_DATABASE_ID) {
             return res.status(500).json({ success: false, error: "NOTION_INSIGHT_DATABASE_ID manquante." });
@@ -398,18 +398,26 @@ app.post('/api/notion', async (req, res) => {
             }
         });
 
-        console.log("✅ Signal injecté avec succès dans la Table 2 de Notion !");
+        console.log("✅ [hoc Insight] Signal injecté avec succès dans le Workspace Notion !");
         res.json({ success: true });
 
     } catch (error) {
-        console.error("❌ Erreur lors de l'insertion dans la Table 2 :", error);
+        console.error("❌ [hoc Insight] Erreur lors de l'injection Notion :", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`====== SÉCURITÉ ET COUPLAGE SCHÉMAS ACTIVÉS ======`);
-    console.log(`🔊 Serveur connecté aux flux Notion sur http://localhost:${PORT}`);
-    console.log(`===================================================`);
-});
+// ==========================================================================
+// ADAPTATION VERCEL SERVERLESS & DÉVELOPPEMENT LOCAL
+// ==========================================================================
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`===================================================`);
+        console.log(`⚡ [hoc Studio] Serveur actif sur http://localhost:${PORT}`);
+        console.log(`===================================================`);
+    });
+}
+
+// Export pour l'exécution serverless Vercel
+module.exports = app;
