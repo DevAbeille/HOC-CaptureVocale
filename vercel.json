@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/weeklyrecap",
-      "schedule": "0 17 * * 5" //Execution automatique tous les vendredi à 5h//
+      "schedule": "0 17 * * 5"
     }
   ]
 }
