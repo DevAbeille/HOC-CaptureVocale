@@ -1,7 +1,6 @@
 require('dotenv').config(); 
 const express = require('express');
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
 const cors = require('cors');
 const fs = require('fs');
 const { GoogleGenAI } = require('@google/genai'); 
