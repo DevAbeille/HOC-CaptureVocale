@@ -206,7 +206,7 @@
             border-color: var(--primary);
         }
 
-        /* Module Enregistreur Vocal */
+        /* Module Enregistreur Vocal - FIX DU BOUTON (Clignotement résolu) */
         .recorder-box {
             display: flex;
             flex-direction: column;
@@ -227,7 +227,8 @@
             align-items: center;
             cursor: pointer;
             position: relative;
-            transition: var(--transition);
+            transition: background-color 0.25s, border-color 0.25s;
+            user-select: none;
         }
 
         .mic-button-inner {
@@ -240,10 +241,15 @@
             align-items: center;
             box-shadow: 0 8px 25px rgba(255, 94, 58, 0.35);
             z-index: 2;
-            transition: var(--transition);
+            pointer-events: none; /* Désactive les interférences du curseur sur les sous-éléments */
         }
 
-        .mic-icon { width: 36px; height: 36px; fill: #FFF; }
+        .mic-icon { 
+            width: 36px; 
+            height: 36px; 
+            fill: #FFF; 
+            pointer-events: none;
+        }
         
         .pulse-ring {
             position: absolute;
@@ -253,10 +259,7 @@
             background-color: var(--primary);
             opacity: 0;
             z-index: 1;
-        }
-
-        .mic-button-outer:hover {
-            transform: scale(1.03);
+            pointer-events: none;
         }
 
         .recorder-box.recording .mic-button-outer {
@@ -763,8 +766,8 @@
                 </div>
 
                 <div id="transcript-wrapper" class="transcript-box">
-                    <label>Synthèse brute (Modifiable avant envoi)</label>
-                    <textarea id="transcript-output" class="edit-textarea" rows="4"></textarea>
+                    <label>Retranscription brute (Modifiable avant envoi)</label>
+                    <textarea id="transcript-output" class="edit-textarea" rows="5"></textarea>
                 </div>
 
                 <div id="action-wrapper" class="action-group">
@@ -855,7 +858,6 @@
         // PERSISTANCE DE LA SESSION ET DE LA NAVIGATION (Local Storage)
         // ==========================================================================
         
-        // Exécuté automatiquement au chargement de la page (F5 / Refresh)
         document.addEventListener('DOMContentLoaded', () => {
             const savedEmail = localStorage.getItem('hoc_user_email');
             const savedProjects = localStorage.getItem('hoc_user_projects');
@@ -869,11 +871,9 @@
             }
 
             if (savedEmail) {
-                // L'utilisateur était déjà connecté !
                 currentUserEmail = savedEmail;
                 applyUserSession(savedEmail);
 
-                // Restauration de la vue active avant le rafraîchissement
                 const lastView = localStorage.getItem('hoc_last_view') || 'projects';
                 const lastProject = localStorage.getItem('hoc_last_project');
 
@@ -951,7 +951,6 @@
                         statusMsg.innerText = "Identification requise pour accéder aux espaces projets Notion";
                         document.getElementById('login-password').value = "";
                     } else {
-                        // Sauvegarde de la session dans le navigateur
                         currentUserEmail = emailInput;
                         localStorage.setItem('hoc_user_email', currentUserEmail);
                         applyUserSession(currentUserEmail);
@@ -1009,7 +1008,6 @@
             document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-            // On mémorise la vue demandée
             localStorage.setItem('hoc_last_view', viewId);
 
             if(viewId === 'capture') {
@@ -1102,7 +1100,6 @@
         }
 
         async function openProjectDetails(projectName) {
-            // Mémorisation du nom du projet en cours de consultation
             localStorage.setItem('hoc_last_project', projectName);
 
             switchView('details');
@@ -1144,7 +1141,7 @@
         }
 
         // ==========================================================================
-        // MOTEUR AUDIO & TRANSMISSION
+        // MOTEUR AUDIO & TRANSMISSION (Retranscription capturée)
         // ==========================================================================
 
         async function processMicState() {
@@ -1176,7 +1173,7 @@
             else if (captureState === 1) {
                 captureState = 2;
                 node.classList.remove('recording');
-                status.innerText = "Analyse et nettoyage par l'IA...";
+                status.innerText = "Traitement de la retranscription...";
                 mediaRecorder.stop();
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
             }
@@ -1196,12 +1193,14 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    status.innerText = "Analyse terminée";
+                    status.innerText = "Retranscription terminée";
                     txWrapper.style.display = "block";
                     actWrapper.style.display = "grid";
-                    txOutput.value = data.anonymizedInsight; 
+                    
+                    // Récupère la retranscription brute prioritairement, sinon le résultat traité
+                    txOutput.value = data.transcript || data.anonymizedInsight || ""; 
                 } else {
-                    status.innerText = "Échec de l'analyse.";
+                    status.innerText = "Échec du traitement audio.";
                     clearCaptureInterface();
                 }
             } catch (error) {
