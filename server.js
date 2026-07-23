@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const path = require('path'); // 👈 1. Ajout de l'import du module path
+const path = require('path');
 const { GoogleGenAI } = require('@google/genai'); 
 const { Client } = require('@notionhq/client');
 
@@ -19,16 +19,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 🟢 2. ROUTE RACINE : Servir le fichier index.html
+// ROUTE RACINE : Servir le fichier index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Stockage en mémoire RAM obligatoire pour l'environnement Serverless (Vercel)
+// Stockage en mémoire RAM pour l'environnement Serverless (Vercel)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
-// ... le reste du code (GoogleGenAI, routes /api/auth/login, etc.) reste inchangé
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
@@ -321,7 +319,6 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
             detectedMimeType = 'audio/webm'; 
         }
 
-        // Lecture du Buffer directement depuis la RAM (Serverless Friendly)
         const audioBuffer = audioFile.buffer;
 
         const audioPart = {
@@ -337,26 +334,36 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
             model: 'gemini-2.5-flash',
             contents: [
                 audioPart,
-                `Tu es l'intelligence artificielle du "Confessionnal IA" par House of Cadres (hoc), un outil de capture de signaux faibles et d'insights terrain pour des projets de design et de conseil.
+                `Tu es un système de retranscription audio extrêmement précis.
 
-                Analyse l'audio fourni et respecte STRICTEMENT les règles suivantes :
-
-                1. Si l'audio est vide ou inexploitable :
-                Réponds EXACTEMENT et UNIQUEMENT avec la phrase suivante, sans aucune autre fioriture :
-                rien n'est dit
-
-                2. Si l'audio contient des informations :
-                Extrais et synthétise de manière claire et concise toutes les informations clés sous la forme d'un insight actionnable. Va droit au but, retire les tics de langage et supprime les hésitations.`
+                RÈGLES IMPÉRATIVES :
+                1. Si l'audio ne contient AUCUNE parole humaine claire (silence, bruit de fond, souffle, grésillements) : Tu dois répondre STRICTEMENT et UNIQUEMENT par une chaîne vide (aucun mot, aucun espace, aucune ponctuation). Ne produis JAMAIS de texte d'exemple ou de fiction.
+                2. Si de la voix est détectée : Retranscris exactement et fidèlement les paroles prononcées, sans ajouter de commentaires.`
             ]
         });
 
-        const generatedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "Rien n'a pu être généré.";
+        let generatedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        generatedText = generatedText.trim();
 
-        console.log(`✨ [hoc Confessionnal] Insight extrait avec succès.`);
+        // Filtre anti-hallucination côté serveur
+        const hallucinations = [
+            "routine matinale", 
+            "sous-titrage", 
+            "merci d'avoir regardé", 
+            "rien n'est dit",
+            "à bientôt"
+        ];
+        
+        if (hallucinations.some(h => generatedText.toLowerCase().includes(h))) {
+            generatedText = "";
+        }
+
+        console.log(`✨ [hoc Confessionnal] Transcription finale : "${generatedText}"`);
 
         res.json({ 
             success: true, 
-            anonymizedInsight: generatedText.trim() 
+            transcript: generatedText,
+            anonymizedInsight: generatedText 
         });
 
     } catch (error) {
