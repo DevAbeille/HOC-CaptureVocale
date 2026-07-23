@@ -842,6 +842,7 @@
     </div>
 
     <!-- SCRIPT DE FONCTIONNEMENT -->
+<!-- SCRIPT DE FONCTIONNEMENT AVEC PERSISTANCE DE SESSION -->
     <script>
         const API_URL = window.location.hostname === 'localhost' ? "http://localhost:3000" : "";
         let currentUserEmail = "";
@@ -850,6 +851,56 @@
         let audioChunks = [];
         let myActiveProjects = [];
         let availableDatabaseProjects = [];
+
+        // ==========================================================================
+        // PERSISTANCE DE LA SESSION (Local Storage)
+        // ==========================================================================
+        
+        // Exécuté automatiquement au chargement de la page (F5 / Refresh)
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedEmail = localStorage.getItem('hoc_user_email');
+            const savedProjects = localStorage.getItem('hoc_user_projects');
+
+            if (savedProjects) {
+                try {
+                    myActiveProjects = JSON.parse(savedProjects);
+                } catch(e) {
+                    myActiveProjects = [];
+                }
+            }
+
+            if (savedEmail) {
+                // L'utilisateur était déjà connecté !
+                currentUserEmail = savedEmail;
+                applyUserSession(savedEmail);
+            }
+        });
+
+        function applyUserSession(email) {
+            document.getElementById('display-user-email').innerText = email;
+            document.getElementById('demo-badge-info').innerHTML = `
+                Utilisateur : <strong>${email}</strong>
+                <button onclick="logoutUser()" style="margin-left: 10px; background: none; border: none; color: var(--primary); cursor: pointer; text-decoration: underline; font-weight: 700; font-size: 0.8rem;">
+                    (Déconnexion)
+                </button>
+            `;
+            document.getElementById('login-overlay').style.display = 'none';
+            syncCatalogueProjets();
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('hoc_user_email');
+            localStorage.removeItem('hoc_user_projects');
+            currentUserEmail = "";
+            myActiveProjects = [];
+            document.getElementById('display-user-email').innerText = "Non connecté";
+            document.getElementById('demo-badge-info').innerHTML = "Session utilisateur : <strong>Non configurée</strong>";
+            document.getElementById('login-overlay').style.display = 'flex';
+        }
+
+        // ==========================================================================
+        // AUTHENTIFICATION
+        // ==========================================================================
 
         function togglePasswordVisibility() {
             const passInput = document.getElementById('login-password');
@@ -888,11 +939,10 @@
                         statusMsg.innerText = "Identification requise pour accéder aux espaces projets Notion";
                         document.getElementById('login-password').value = "";
                     } else {
+                        // Sauvegarde de la session dans le navigateur
                         currentUserEmail = emailInput;
-                        document.getElementById('display-user-email').innerText = currentUserEmail;
-                        document.getElementById('demo-badge-info').innerHTML = `Utilisateur : <strong>${currentUserEmail}</strong>`;
-                        document.getElementById('login-overlay').style.display = 'none';
-                        await syncCatalogueProjets();
+                        localStorage.setItem('hoc_user_email', currentUserEmail);
+                        applyUserSession(currentUserEmail);
                     }
                 } else {
                     alert(data.error || "Une erreur est survenue.");
@@ -906,11 +956,13 @@
 
         function bypassLogin() {
             currentUserEmail = "demo.test@agence.local";
-            document.getElementById('display-user-email').innerText = "Mode Test (Bypass)";
-            document.getElementById('demo-badge-info').innerHTML = `Utilisateur : <strong>${currentUserEmail} (Bypass)</strong>`;
-            document.getElementById('login-overlay').style.display = 'none';
-            syncCatalogueProjets();
+            localStorage.setItem('hoc_user_email', currentUserEmail);
+            applyUserSession(currentUserEmail);
         }
+
+        // ==========================================================================
+        // GESTION DES PROJETS & INTERFACE
+        // ==========================================================================
 
         async function syncCatalogueProjets() {
             try {
@@ -919,6 +971,9 @@
                 if (data.success) {
                     availableDatabaseProjects = data.projects;
                     updateCaptureDropdown(); 
+                    if (document.getElementById('view-projects').classList.contains('active')) {
+                        renderActiveProjectsList();
+                    }
                 }
             } catch (err) {
                 console.error("Erreur lors de la synchronisation :", err);
@@ -1019,6 +1074,7 @@
                 if (data.success) {
                     if (!myActiveProjects.includes(projectName)) {
                         myActiveProjects.push(projectName);
+                        localStorage.setItem('hoc_user_projects', JSON.stringify(myActiveProjects));
                     }
                     updateCaptureDropdown(); 
                     switchView('projects');
@@ -1066,6 +1122,10 @@
             document.querySelectorAll('.tag-badge').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
         }
+
+        // ==========================================================================
+        // MOTEUR AUDIO & TRANSMISSION
+        // ==========================================================================
 
         async function processMicState() {
             const node = document.getElementById('recorder-node');
