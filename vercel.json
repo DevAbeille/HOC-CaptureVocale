@@ -4,5 +4,19 @@
       "path": "/api/weeklyrecap",
       "schedule": "0 17 * * 5"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/weeklyrecap",
+      "destination": "/weeklyrecap.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/server.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
