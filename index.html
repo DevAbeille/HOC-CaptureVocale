@@ -3,41 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Confessionnal IA - Collecte de Captures</title>
+    <title>Confessionnal IA - House of Codesign</title>
+    <!-- Chargement de la police Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
         /* ==========================================================================
-           Charte graphique & Variables harmonisées avec le Catalogue Projets
+           CHARTE GRAPHIQUE & DESIGN SYSTEM — HOUSE OF CODESIGN (HOC)
            ========================================================================== */
         :root {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --primary-light: #eff6ff;
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --card-bg-hover: #1c2128;
+            --border-color: #30363d;
 
-            --status-recording: #ef4444;
-            --status-recording-bg: #fef2f2;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
 
-            --badge-outils: #0284c7;
-            --badge-outils-bg: #e0f2fe;
-            
-            --badge-pres: #7c3aed;
-            --badge-pres-bg: #f3e8ff;
-            
-            --badge-docs: #059669;
-            --badge-docs-bg: #d1fae5;
+            --primary: #ff5e3a;
+            --primary-hover: #ff785a;
+            --primary-light: rgba(255, 94, 58, 0.12);
 
-            --border-color: #e2e8f0;
-            --radius-lg: 12px;
+            --status-recording: #f85149;
+            --status-recording-bg: rgba(248, 81, 73, 0.15);
+
+            --radius-lg: 14px;
             --radius-pill: 9999px;
-            
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.07);
-            --shadow-hover: 0 10px 25px rgba(37, 99, 235, 0.12);
+
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+            --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 94, 58, 0.2);
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         *, *::before, *::after {
@@ -48,7 +47,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
             display: flex;
@@ -57,6 +56,7 @@
             min-height: 100vh;
             min-height: 100dvh;
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         .phone-container {
@@ -72,13 +72,13 @@
 
         /* Status bar / En-tête */
         .status-bar {
-            height: 52px;
+            height: 54px;
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-secondary);
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
@@ -87,12 +87,28 @@
             box-shadow: var(--shadow-sm);
         }
 
+        .status-bar-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-bar-title::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+
         #display-user-email {
             background: var(--primary-light);
             color: var(--primary);
+            border: 1px solid rgba(255, 94, 58, 0.25);
             padding: 4px 12px;
             border-radius: var(--radius-pill);
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.75rem;
         }
 
@@ -115,14 +131,18 @@
         }
 
         h2 {
-            font-size: 1.6rem;
+            font-size: 1.75rem;
             font-weight: 800;
             margin-bottom: 20px;
             letter-spacing: -0.03em;
             color: var(--text-primary);
         }
 
-        h2 span { color: var(--primary); }
+        /* Le point orange signature HOC */
+        h2::after {
+            content: '.';
+            color: var(--primary);
+        }
 
         label {
             display: block;
@@ -130,7 +150,7 @@
             text-transform: uppercase;
             color: var(--text-muted);
             margin-bottom: 8px;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
             font-weight: 700;
         }
 
@@ -143,18 +163,20 @@
             padding: 14px 16px;
             border-radius: var(--radius-lg);
             font-size: 0.95rem;
+            font-family: inherit;
             outline: none;
             cursor: pointer;
             appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8'><path d='M2 4l4 4 4-4z'/></svg>");
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e'><path d='M2 4l4 4 4-4z'/></svg>");
             background-repeat: no-repeat;
             background-position: right 16px center;
             margin-bottom: 20px;
             box-shadow: var(--shadow-sm);
-            transition: border-color 0.2s;
+            transition: var(--transition);
         }
         .custom-select:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         /* Badges / Tags */
@@ -173,7 +195,7 @@
             font-size: 0.85rem;
             font-weight: 600;
             border: 1px solid var(--border-color);
-            transition: all 0.2s ease;
+            transition: var(--transition);
             cursor: pointer;
             box-shadow: var(--shadow-sm);
         }
@@ -199,12 +221,13 @@
             height: 130px;
             border-radius: 50%;
             background-color: var(--primary-light);
+            border: 1px solid rgba(255, 94, 58, 0.3);
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             position: relative;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .mic-button-inner {
@@ -215,11 +238,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 8px 25px rgba(255, 94, 58, 0.35);
             z-index: 2;
+            transition: var(--transition);
         }
 
         .mic-icon { width: 36px; height: 36px; fill: #FFF; }
+        
         .pulse-ring {
             position: absolute;
             width: 100%;
@@ -230,13 +255,18 @@
             z-index: 1;
         }
 
+        .mic-button-outer:hover {
+            transform: scale(1.03);
+        }
+
         .recorder-box.recording .mic-button-outer {
             background-color: var(--status-recording-bg);
+            border-color: rgba(248, 81, 73, 0.4);
         }
 
         .recorder-box.recording .mic-button-inner {
             background-color: var(--status-recording);
-            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 8px 25px rgba(248, 81, 73, 0.4);
         }
 
         .recorder-box.recording .pulse-ring {
@@ -268,7 +298,7 @@
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-sm);
             display: none; 
-            animation: slideUp 0.3s ease forwards;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .edit-textarea {
@@ -277,6 +307,7 @@
             border: none;
             color: var(--text-primary);
             font-size: 0.95rem;
+            font-family: inherit;
             line-height: 1.5;
             resize: none;
             outline: none;
@@ -287,7 +318,7 @@
             grid-template-columns: 1fr;
             gap: 12px;
             margin-bottom: 30px;
-            animation: slideUp 0.3s ease forwards;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes slideUp {
@@ -295,36 +326,45 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Boutons */
+        /* Boutons HOC */
         .btn {
             padding: 14px 20px;
             border-radius: var(--radius-pill);
             font-size: 0.875rem;
             font-weight: 700;
+            font-family: inherit;
             border: 1px solid transparent;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:active { transform: scale(0.98); }
+        
         .btn-primary { 
             background-color: var(--primary); 
-            color: white; 
-            box-shadow: var(--shadow-sm);
+            color: #ffffff; 
+            box-shadow: 0 4px 15px rgba(255, 94, 58, 0.3);
         }
         .btn-primary:hover {
             background-color: var(--primary-hover);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
         }
         
         .btn-secondary {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            color: var(--text-secondary);
+            color: var(--text-primary);
         }
         .btn-secondary:hover {
             border-color: var(--primary);
             color: var(--primary);
+            background-color: var(--card-bg-hover);
         }
 
         /* Sections & Cartes de projets */
@@ -345,12 +385,12 @@
             padding: 16px;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-sm);
-            animation: slideUp 0.3s ease forwards;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             font-weight: 600;
         }
 
@@ -358,6 +398,7 @@
             border-color: var(--primary);
             box-shadow: var(--shadow-hover);
             transform: translateY(-2px);
+            background-color: var(--card-bg-hover);
         }
 
         .project-arrow { color: var(--primary); font-weight: bold; font-size: 1.1rem; }
@@ -387,11 +428,12 @@
             cursor: pointer;
             margin-bottom: 24px;
             box-shadow: var(--shadow-sm);
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
         .trigger-search-bar:hover {
             border-color: var(--primary);
             color: var(--text-secondary);
+            background-color: var(--card-bg-hover);
         }
         .trigger-search-bar svg { fill: currentColor; width: 18px; height: 18px; }
 
@@ -451,8 +493,8 @@
         .modal-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(4px);
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(6px);
             z-index: 200;
             display: none;
             justify-content: center;
@@ -468,7 +510,7 @@
             max-width: 400px;
             padding: 20px;
             box-shadow: var(--shadow-hover);
-            animation: slideUp 0.2s ease-out;
+            animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .modal-header {
@@ -481,6 +523,7 @@
         }
         .modal-header h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;}
         .modal-close { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; line-height: 1; }
+        .modal-close:hover { color: var(--text-primary); }
 
         .search-input {
             width: 100%;
@@ -490,10 +533,15 @@
             padding: 12px 16px;
             border-radius: var(--radius-pill);
             font-size: 0.9rem;
+            font-family: inherit;
             outline: none;
             margin-bottom: 15px;
+            transition: var(--transition);
         }
-        .search-input:focus { border-color: var(--primary); }
+        .search-input:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
 
         .search-results {
             max-height: 220px;
@@ -504,7 +552,7 @@
         }
 
         .search-row {
-            background-color: var(--card-bg);
+            background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             padding: 12px 14px;
             border-radius: var(--radius-lg);
@@ -513,9 +561,9 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
-        .search-row:hover { border-color: var(--primary); background-color: var(--primary-light); }
+        .search-row:hover { border-color: var(--primary); background-color: var(--card-bg-hover); }
         .search-row-title { flex: 1; padding-right: 10px; font-weight: 600; color: var(--text-primary); }
 
         /* Écran de connexion (Login Overlay) */
@@ -531,6 +579,20 @@
             padding: 30px;
         }
 
+        .login-logo-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid rgba(255, 94, 58, 0.25);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.35rem 1rem;
+            border-radius: var(--radius-pill);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
         .login-input {
             width: 100%;
             max-width: 320px;
@@ -542,11 +604,15 @@
             margin-bottom: 12px;
             text-align: center;
             font-size: 0.95rem;
+            font-family: inherit;
             outline: none;
             box-shadow: var(--shadow-sm);
-            transition: border-color 0.2s;
+            transition: var(--transition);
         }
-        .login-input:focus { border-color: var(--primary); }
+        .login-input:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
 
         .password-wrapper { 
             position: relative; 
@@ -579,7 +645,7 @@
             z-index: 2;
         }
 
-        /* Navigation inférieure (Tabs / Pills harmonisées) */
+        /* Navigation inférieure */
         .bottom-nav {
             position: absolute;
             bottom: 0;
@@ -594,7 +660,7 @@
             gap: 12px;
             z-index: 100;
             padding-bottom: max(8px, env(safe-area-inset-bottom));
-            box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.3);
         }
 
         .nav-item {
@@ -602,20 +668,23 @@
             align-items: center;
             gap: 8px;
             background: none;
-            border: none;
-            padding: 10px 20px;
+            border: 1px solid transparent;
+            padding: 10px 22px;
             border-radius: var(--radius-pill);
             color: var(--text-secondary);
             cursor: pointer;
             font-size: 0.85rem;
             font-weight: 700;
-            transition: all 0.2s ease;
+            font-family: inherit;
+            transition: var(--transition);
         }
 
         .nav-item svg { width: 18px; height: 18px; fill: currentColor; }
+        
         .nav-item.active { 
             background-color: var(--primary-light); 
             color: var(--primary); 
+            border-color: rgba(255, 94, 58, 0.25);
         }
         
         .back-navigation {
@@ -627,6 +696,10 @@
             cursor: pointer;
             margin-bottom: 15px;
             font-weight: 700;
+            transition: var(--transition);
+        }
+        .back-navigation:hover {
+            color: var(--primary-hover);
         }
     </style>
 </head>
@@ -636,7 +709,8 @@
         
         <!-- ÉCRAN DE CONNEXION -->
         <div id="login-overlay" class="login-view-overlay">
-            <h2 style="margin-bottom: 8px; text-align: center;">Confessionnal <span>IA</span></h2>
+            <span class="login-logo-badge">House of Codesign</span>
+            <h2 style="margin-bottom: 8px; text-align: center;">Confessionnal IA</h2>
             <p id="login-status-msg" style="color: var(--text-secondary); margin-bottom: 24px; text-align: center; font-size: 0.9rem; line-height: 1.4; max-width: 300px;">
                 Identification requise pour accéder aux espaces projets Notion
             </p>
@@ -648,14 +722,14 @@
             </div>
             
             <button onclick="performLogin(false)" class="btn btn-primary" style="width: 100%; max-width: 320px; margin-bottom: 8px;">Se connecter</button>
-            <button onclick="performLogin(true)" class="btn btn-secondary" style="width: 100%; max-width: 320px; margin-top: 0; margin-bottom: 20px; border-color: var(--primary); color: var(--primary);">🆕 Créer mon compte</button>
+            <button onclick="performLogin(true)" class="btn btn-secondary" style="width: 100%; max-width: 320px; margin-top: 0; margin-bottom: 20px; border-color: rgba(255, 94, 58, 0.4); color: var(--primary);">🆕 Créer mon compte</button>
             
             <button onclick="bypassLogin()" class="btn btn-secondary" style="width: 100%; max-width: 320px; margin-top: 0; opacity: 0.7;">⚙️ Tester sans connexion (Bypass)</button>
         </div>
 
         <!-- BARRE DE STATUT SUPÉRIEURE -->
         <div class="status-bar">
-            <span>Collecte de Captures</span>
+            <span class="status-bar-title">Collecte de Captures</span>
             <span id="display-user-email">Non connecté</span>
         </div>
 
@@ -664,7 +738,7 @@
             
             <!-- VUE : CAPTURE VOCALE -->
             <div id="view-capture" class="app-view">
-                <h2>Enregistrer une <span>Capture</span></h2>
+                <h2>Enregistrer une Capture</h2>
                 
                 <label for="project-select">Projet ciblé</label>
                 <select id="project-select" class="custom-select"></select>
@@ -700,7 +774,7 @@
 
             <!-- VUE : LISTE DES PROJETS -->
             <div id="view-projects" class="app-view active">
-                <h2>Mes Projets <span>Actifs</span></h2>
+                <h2>Mes Projets Actifs</h2>
                 
                 <div class="account-banner" id="demo-badge-info">
                     Session utilisateur : <strong>Non configurée</strong>
@@ -767,7 +841,7 @@
         </div>
     </div>
 
-    <!-- CODE SCRIPT -->
+    <!-- SCRIPT DE FONCTIONNEMENT -->
     <script>
         const API_URL = window.location.hostname === 'localhost' ? "http://localhost:3000" : "";
         let currentUserEmail = "";
