@@ -331,17 +331,22 @@ app.post('/api/confess', upload.single('audio'), async (req, res) => {
         console.log(`🎙️ [hoc Confessionnal] Analyse du flux vocal avec Gemini...`);
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                audioPart,
-                `Tu es un système de retranscription audio extrêmement précis.
+    model: 'gemini-2.5-flash',
+    contents: [
+        audioPart // On ne laisse QUE la partie audio ici
+    ],
+    config: {
+        // 1. Désactive la créativité / hallucination (0.0 = déterministe)
+        temperature: 0.0,
+        
+        // 2. Isole la consigne système pour éviter les leaks dans la réponse
+        systemInstruction: `Tu es un système de retranscription audio extrêmement précis.
 
-                RÈGLES IMPÉRATIVES :
-                1. Si l'audio ne contient AUCUNE parole humaine claire (silence, bruit de fond, souffle, grésillements) : Tu dois répondre STRICTEMENT et UNIQUEMENT par une chaîne vide (aucun mot, aucun espace, aucune ponctuation). Ne produis JAMAIS de texte d'exemple ou de fiction.
-                2. Si de la voix est détectée : Retranscris exactement et fidèlement les paroles prononcées, sans ajouter de commentaires.`
-            ]
-        });
-
+RÈGLES IMPÉRATIVES :
+1. Si l'audio ne contient AUCUNE parole humaine claire (silence, bruit de fond, souffle, grésillements) : Tu dois répondre STRICTEMENT et UNIQUEMENT par une chaîne vide (aucun mot, aucun espace, aucune ponctuation). Ne produis JAMAIS de texte d'exemple ou de fiction.
+2. Si de la voix est détectée : Retranscris exactement et fidèlement les paroles prononcées, sans ajouter de commentaires.`
+    }
+});
         let generatedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
         generatedText = generatedText.trim();
 
