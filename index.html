@@ -769,7 +769,7 @@
 
     <!-- CODE SCRIPT (CONSERVÉ À 100%) -->
     <script>
-        const API_URL = "http://localhost:3000";
+        const API_URL = window.location.hostname === 'localhost' ? "http://localhost:3000" : "";
         let currentUserEmail = "";
         let captureState = 0; 
         let mediaRecorder;
