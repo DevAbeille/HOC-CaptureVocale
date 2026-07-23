@@ -767,7 +767,7 @@
         </div>
     </div>
 
-    <!-- CODE SCRIPT (CONSERVÉ À 100%) -->
+    <!-- CODE SCRIPT -->
     <script>
         const API_URL = window.location.hostname === 'localhost' ? "http://localhost:3000" : "";
         let currentUserEmail = "";
@@ -979,7 +979,12 @@
                     body: JSON.stringify({ project: projectName })
                 });
                 const dataRecaps = await resRecaps.json();
-                if (dataRecaps.success) recapsList.innerHTML = dataRecaps.contents.map(r => `<li>${r}</li>`).join('');
+                if (dataRecaps.success) {
+                    const list = dataRecaps.contents || dataRecaps.contenu || [];
+                    recapsList.innerHTML = list.length > 0 
+                        ? list.map(r => `<li>${r}</li>`).join('') 
+                        : "<li>Aucun récapitulatif disponible.</li>";
+                }
             } catch (err) { recapsList.innerHTML = "<li>Erreur lors de la récupération des rapports.</li>"; }
         }
 
