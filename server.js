@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
+const path = require('path'); // 👈 1. Ajout de l'import du module path
 const { GoogleGenAI } = require('@google/genai'); 
 const { Client } = require('@notionhq/client');
 
@@ -18,9 +19,16 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// 🟢 2. ROUTE RACINE : Servir le fichier index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Stockage en mémoire RAM obligatoire pour l'environnement Serverless (Vercel)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+// ... le reste du code (GoogleGenAI, routes /api/auth/login, etc.) reste inchangé
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
