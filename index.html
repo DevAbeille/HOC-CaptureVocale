@@ -324,6 +324,12 @@
             animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        @media (min-width: 480px) {
+            .action-group {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
@@ -772,6 +778,7 @@
 
                 <div id="action-wrapper" class="action-group">
                     <button class="btn btn-primary" onclick="shipDirectToNotion()">🚀 Envoyer à la base Notion</button>
+                    <button class="btn btn-secondary" onclick="clearCaptureInterface()">❌ Annuler / Effacer</button>
                 </div>
             </div>
 
@@ -1180,42 +1187,42 @@
         }
 
         async function sendAudioToGemini(audioBlob) {
-    const status = document.getElementById('recorder-status');
-    const txWrapper = document.getElementById('transcript-wrapper');
-    const actWrapper = document.getElementById('action-wrapper');
-    const txOutput = document.getElementById('transcript-output');
+            const status = document.getElementById('recorder-status');
+            const txWrapper = document.getElementById('transcript-wrapper');
+            const actWrapper = document.getElementById('action-wrapper');
+            const txOutput = document.getElementById('transcript-output');
 
-    const formData = new FormData();
-    formData.append('audio', audioBlob, `capture.webm`);
+            const formData = new FormData();
+            formData.append('audio', audioBlob, `capture.webm`);
 
-    try {
-        const response = await fetch(`${API_URL}/api/confess`, { method: 'POST', body: formData });
-        const data = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/api/confess`, { method: 'POST', body: formData });
+                const data = await response.json();
 
-        if (data.success) {
-            const transcriptResult = data.transcript || "";
+                if (data.success) {
+                    const transcriptResult = data.transcript || "";
 
-            txOutput.value = transcriptResult;
-            txWrapper.style.display = "block";
+                    txOutput.value = transcriptResult;
+                    txWrapper.style.display = "block";
 
-            // Si c'est vide, on avertit l'utilisateur et on cache le bouton d'envoi Notion
-            if (transcriptResult.trim() === "") {
-                status.innerText = "Aucune parole détectée.";
-                actWrapper.style.display = "none";
-            } else {
-                status.innerText = "Retranscription terminée";
-                actWrapper.style.display = "grid";
+                    // Si c'est vide, on avertit l'utilisateur et on cache les boutons d'actions
+                    if (transcriptResult.trim() === "") {
+                        status.innerText = "Aucune parole détectée.";
+                        actWrapper.style.display = "none";
+                    } else {
+                        status.innerText = "Retranscription terminée";
+                        actWrapper.style.display = "grid";
+                    }
+
+                } else {
+                    status.innerText = "Échec du traitement audio.";
+                    clearCaptureInterface();
+                }
+            } catch (error) {
+                status.innerText = "Erreur réseau.";
+                clearCaptureInterface();
             }
-
-        } else {
-            status.innerText = "Échec du traitement audio.";
-            clearCaptureInterface();
         }
-    } catch (error) {
-        status.innerText = "Erreur réseau.";
-        clearCaptureInterface();
-    }
-}
 
         function clearCaptureInterface() {
             captureState = 0;
